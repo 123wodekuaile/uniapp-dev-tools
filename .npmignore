@@ -1,0 +1,22 @@
+# 开发文件
+src/
+rollup.config.js
+package-lock.json
+yarn.lock
+
+# 文档
+READEME.MD
+
+# 开发工具
+.vscode/
+.idea/
+*.log
+
+# 测试文件
+test/
+tests/
+__tests__/
+
+# 构建临时文件
+.tmp/
+.temp/ 
