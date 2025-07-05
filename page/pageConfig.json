@@ -1,0 +1,12 @@
+{
+  "root": "page",
+  "name": "devToolsPage",
+  "pages": [
+    {
+      "path": "index",
+      "style": {
+        "navigationStyle": "custom"
+      }
+    }
+  ]
+} 

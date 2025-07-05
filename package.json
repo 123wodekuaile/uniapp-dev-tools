@@ -11,10 +11,15 @@
       "require": "./dist/index.cjs"
     }
   },
+  "bin": {
+    "anneng-uniapp-dev-tools": "./bin/anneng-uniapp-dev-tools"
+  },
   "files": [
     "dist",
     "core",
-    "page"
+    "page",
+    "scripts",
+    "bin"
   ],
   "scripts": {
     "build": "webpack --mode production",

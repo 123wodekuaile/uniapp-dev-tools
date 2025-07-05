@@ -1,0 +1,257 @@
+#!/usr/bin/env node
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/**
+ * anneng-uniapp-dev-tools CLI
+ */
+function main() {
+  const command = process.argv[2];
+  
+  switch (command) {
+    case 'install':
+      installDevTools();
+      break;
+    case 'gen-pages':
+      generatePages();
+      break;
+    case 'copy-pages':
+      copyPages();
+      break;
+    case 'config':
+      showConfig();
+      break;
+    case 'init':
+      initProject();
+      break;
+    default:
+      showHelp();
+  }
+}
+
+/**
+ * 完整安装调试工具
+ */
+function installDevTools() {
+  console.log('🚀 安装 anneng-uniapp-dev-tools...');
+  
+  // 初始化项目配置
+  initProject();
+  
+  // 复制页面文件
+  copyPages();
+  
+  // 生成配置
+  generatePages();
+  
+  console.log('✅ 安装完成！');
+  console.log('📝 请在你的项目中引入调试工具：');
+  console.log(`
+import { devTools, devToolsConfig } from 'anneng-uniapp-dev-tools';
+import Vue from 'vue';
+
+Vue.use(devTools, {
+  ...devToolsConfig,
+  status: true
+});
+  `);
+}
+
+/**
+ * 初始化项目配置
+ */
+function initProject() {
+  console.log('📝 初始化项目配置...');
+  
+  try {
+    // 创建 gen-pages.js 脚本
+    const scriptContent = fs.readFileSync(
+      path.resolve(__dirname, '../scripts/gen-pages-template.js'),
+      'utf8'
+    );
+    
+    const scriptPath = path.resolve(process.cwd(), 'gen-pages.js');
+    if (!fs.existsSync(scriptPath)) {
+      fs.writeFileSync(scriptPath, scriptContent);
+      console.log('✅ 已创建 gen-pages.js 脚本');
+    } else {
+      console.log('⚠️  gen-pages.js 已存在，跳过');
+    }
+    
+    // 创建 pages.base.json 模板
+    const baseConfigPath = path.resolve(process.cwd(), 'src/pages.base.json');
+    if (!fs.existsSync(baseConfigPath)) {
+      const baseConfigTemplate = {
+        "pages": [
+          {
+            "path": "pages/index/index",
+            "style": {
+              "navigationBarTitleText": "首页"
+            }
+          }
+        ],
+        "subPackages": [],
+        "globalStyle": {
+          "navigationBarTextStyle": "black",
+          "navigationBarTitleText": "uni-app",
+          "backgroundColor": "#F8F8F8"
+        }
+      };
+      
+      // 确保 src 目录存在
+      const srcDir = path.dirname(baseConfigPath);
+      if (!fs.existsSync(srcDir)) {
+        fs.mkdirSync(srcDir, { recursive: true });
+      }
+      
+      fs.writeFileSync(baseConfigPath, JSON.stringify(baseConfigTemplate, null, 2));
+      console.log('✅ 已创建 src/pages.base.json 模板');
+    } else {
+      console.log('⚠️  src/pages.base.json 已存在，跳过');
+    }
+    
+  } catch (error) {
+    console.error('❌ 初始化失败:', error.message);
+  }
+}
+
+/**
+ * 生成页面配置
+ */
+function generatePages() {
+  console.log('🔧 生成页面配置...');
+  
+  try {
+    const scriptPath = path.resolve(process.cwd(), 'gen-pages.js');
+    if (fs.existsSync(scriptPath)) {
+      // 使用动态import替代require
+      import(scriptPath).catch(error => {
+        console.error('❌ 执行脚本失败:', error.message);
+      });
+    } else {
+      console.error('❌ 未找到 gen-pages.js 脚本，请先运行 init 命令');
+    }
+  } catch (error) {
+    console.error('❌ 生成失败:', error.message);
+  }
+}
+
+/**
+ * 复制页面文件
+ */
+function copyPages() {
+  console.log('📁 复制页面文件...');
+  
+  try {
+    const sourceDir = path.resolve(__dirname, '../page');
+    const targetDir = path.resolve(process.cwd(), 'page');
+    
+    if (!fs.existsSync(sourceDir)) {
+      console.error('❌ 源目录不存在:', sourceDir);
+      return;
+    }
+    
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    
+    copyDirectory(sourceDir, targetDir);
+    console.log('✅ 页面文件已复制到:', targetDir);
+    
+  } catch (error) {
+    console.error('❌ 复制失败:', error.message);
+  }
+}
+
+/**
+ * 显示配置信息
+ */
+function showConfig() {
+  console.log('📋 页面配置信息:');
+  console.log(`
+{
+  "subPackages": [
+    {
+      "root": "devTools/page",
+      "name": "devToolsPage",
+      "pages": [
+        {
+          "path": "index",
+          "style": {
+            "navigationStyle": "custom"
+          }
+        }
+      ]
+    }
+  ]
+}
+  `);
+  
+  console.log('📝 使用说明:');
+  console.log('1. 在 src/pages.base.json 中维护你的页面配置');
+  console.log('2. 运行 npm run gen-pages 生成最终配置');
+  console.log('3. 在 package.json 中添加脚本:');
+  console.log(`
+  "scripts": {
+    "gen-pages": "node gen-pages.js",
+    "dev": "npm run gen-pages && uni-app dev",
+    "build": "npm run gen-pages && uni-app build"
+  }
+  `);
+}
+
+/**
+ * 显示帮助信息
+ */
+function showHelp() {
+  console.log(`
+anneng-uniapp-dev-tools CLI
+
+用法:
+  anneng-uniapp-dev-tools <command>
+
+命令:
+  install     完整安装（初始化 + 复制页面 + 生成配置）
+  init        初始化项目配置（创建脚本和模板）
+  gen-pages   生成页面配置
+  copy-pages  复制页面文件
+  config      显示配置信息
+
+示例:
+  npx anneng-uniapp-dev-tools install
+  npx anneng-uniapp-dev-tools init
+  npx anneng-uniapp-dev-tools gen-pages
+  npx anneng-uniapp-dev-tools copy-pages
+  npx anneng-uniapp-dev-tools config
+  `);
+}
+
+/**
+ * 递归复制目录
+ */
+function copyDirectory(source, target) {
+  const files = fs.readdirSync(source);
+  
+  files.forEach(file => {
+    const sourcePath = path.join(source, file);
+    const targetPath = path.join(target, file);
+    const stat = fs.statSync(sourcePath);
+    
+    if (stat.isDirectory()) {
+      if (!fs.existsSync(targetPath)) {
+        fs.mkdirSync(targetPath, { recursive: true });
+      }
+      copyDirectory(sourcePath, targetPath);
+    } else {
+      fs.copyFileSync(sourcePath, targetPath);
+    }
+  });
+}
+
+// 运行主函数
+main(); 

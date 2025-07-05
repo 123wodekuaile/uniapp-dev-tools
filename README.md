@@ -8,9 +8,100 @@
 npm install anneng-uniapp-dev-tools
 ```
 
-## 使用方法
+## 安装和配置
 
-### ES模块方式
+### 1. 安装包
+
+```bash
+npm install anneng-uniapp-dev-tools
+```
+
+### 2. 配置页面（重要！）
+
+由于uniApp的特殊性，需要配置调试页面。我们提供了多种方式：
+
+#### 方法一：使用CLI工具（推荐）
+
+```bash
+# 完整安装（自动初始化 + 复制页面 + 生成配置）
+npx anneng-uniapp-dev-tools install
+
+# 初始化项目配置
+npx anneng-uniapp-dev-tools init
+
+# 生成页面配置
+npx anneng-uniapp-dev-tools gen-pages
+
+# 复制页面文件
+npx anneng-uniapp-dev-tools copy-pages
+
+# 显示配置信息
+npx anneng-uniapp-dev-tools config
+```
+
+#### 方法二：自动生成配置（推荐）
+
+1. **初始化项目**
+   ```bash
+   npx anneng-uniapp-dev-tools init
+   ```
+   这会创建：
+   - `gen-pages.js` - 生成脚本
+   - `src/pages.base.json` - 基础配置模板
+
+2. **在 package.json 中添加脚本**
+   ```json
+   {
+     "scripts": {
+       "gen-pages": "node gen-pages.js",
+       "dev": "npm run gen-pages && uni-app dev",
+       "build": "npm run gen-pages && uni-app build"
+     }
+   }
+   ```
+
+3. **维护你的页面配置**
+   在 `src/pages.base.json` 中添加你的页面配置
+
+4. **生成最终配置**
+   ```bash
+   npm run gen-pages
+   ```
+   这会自动合并你的配置和调试工具配置，生成 `src/pages.json`
+
+#### 方法三：手动配置
+
+1. **复制页面文件**
+   ```bash
+   cp -r node_modules/anneng-uniapp-dev-tools/page devTools/page
+   ```
+
+2. **配置 pages.json**
+   在项目的 `src/pages.json` 文件中添加以下配置：
+
+   ```json
+   {
+     "pages": [...],
+     "subPackages": [
+       {
+         "root": "devTools/page",
+         "name": "devToolsPage",
+         "pages": [
+           {
+             "path": "index",
+             "style": {
+               "navigationStyle": "custom"
+             }
+           }
+         ]
+       }
+     ]
+   }
+   ```
+
+### 3. 使用调试工具
+
+#### ES模块方式
 
 ```javascript
 import { devTools, devToolsConfig } from 'anneng-uniapp-dev-tools';
@@ -27,7 +118,7 @@ Vue.use(devTools, {
 });
 ```
 
-### CommonJS方式
+#### CommonJS方式
 
 ```javascript
 const { devTools, devToolsConfig } = require('anneng-uniapp-dev-tools');
